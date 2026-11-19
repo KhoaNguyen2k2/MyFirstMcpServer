@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - O X Ô</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .status {
+            color: #fff;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .scoreboard {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            display: block;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
+        }
+
+        .score-value {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 12px;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .cell:hover:not(.taken) {
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .cell.taken {
+            cursor: default;
+        }
+
+        .cell.x {
+            color: #e74c3c;
+        }
+
+        .cell.o {
+            color: #3498db;
+        }
+
+        .cell.winner {
+            background: #2ecc71 !important;
+            color: #fff !important;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        button {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+            background: #e74c3c;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        button:hover {
+            background: #c0392b;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        @media (max-width: 420px) {
+            h1 { font-size: 2rem; }
+            .board {
+                grid-template-columns: repeat(3, 80px);
+                grid-template-rows: repeat(3, 80px);
+            }
+            .cell { width: 80px; height: 80px; font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tic Tac Toe</h1>
+
+    <div class="status" id="status">Lượt của <span id="current-player">X</span></div>
+
+    <div class="scoreboard">
+        <div class="score-item">
+            <span class="score-label">X</span>
+            <span class="score-value" id="score-x">0</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">Hòa</span>
+            <span class="score-value" id="score-draw">0</span>
+        </div>
+        <div class="score-item">
+            <span class="score-label">O</span>
+            <span class="score-value" id="score-o">0</span>
+        </div>
+    </div>
+
+    <div class="board" id="board">
+        <button class="cell" data-index="0"></button>
+        <button class="cell" data-index="1"></button>
+        <button class="cell" data-index="2"></button>
+        <button class="cell" data-index="3"></button>
+        <button class="cell" data-index="4"></button>
+        <button class="cell" data-index="5"></button>
+        <button class="cell" data-index="6"></button>
+        <button class="cell" data-index="7"></button>
+        <button class="cell" data-index="8"></button>
+    </div>
+
+    <button onclick="undoMove()">Undo</button>
+    <button onclick="resetGame()">Chơi lại</button>
+
+    <script>
+        const boardElement = document.getElementById("board");
+        const cells = document.querySelectorAll(".cell");
+        const statusElement = document.getElementById("status");
+        const currentPlayerElement = document.getElementById("current-player");
+        const scoreXElement = document.getElementById("score-x");
+        const scoreOElement = document.getElementById("score-o");
+        const scoreDrawElement = document.getElementById("score-draw");
+
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let currentPlayer = "X";
+        let gameActive = true;
+        let scores = { X: 0, O: 0, Draw: 0 };
+        let moveHistory = []; // Lưu lịch sử di chuyển
+
+        const winningConditions = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+
+        function handleCellClick(event) {
+            const cell = event.target;
+            const index = cell.getAttribute("data-index");
+
+            // Ô đã có ký tự hoặc trò chơi đã kết thúc -> bỏ qua
+            if (board[index] !== "" || !gameActive) {
+                return;
+            }
+
+            // Lưu trạng thái trước khi đổi (cho phép undo)
+            moveHistory.push({
+                board: [...board],
+                currentPlayer: currentPlayer,
+                gameActive: gameActive
+            });
+
+            // Đánh dấu ô
+            board[index] = currentPlayer;
+            cell.textContent = currentPlayer;
+            cell.classList.add("taken", currentPlayer.toLowerCase());
+
+            // Kiểm tra thắng
+            if (checkWin()) {
+                statusElement.textContent = `Người chơi ${currentPlayer} thắng rồi! 🎉`;
+                currentPlayerElement.textContent = currentPlayer;
+                scores[currentPlayer]++;
+                updateScoreboard();
+                highlightWinner();
+                gameActive = false;
+                return;
+            }
+
+            // Kiểm tra hòa
+            if (checkDraw()) {
+                statusElement.textContent = "Hòa rồi! 🤝";
+                scores.Draw++;
+                updateScoreboard();
+                gameActive = false;
+                return;
+            }
+
+            // Đổi lượt
+            currentPlayer = currentPlayer === "X" ? "O" : "X";
+            currentPlayerElement.textContent = currentPlayer;
+            statusElement.textContent = `Lượt của ${currentPlayer}`;
+        }
+
+        function checkWin() {
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (
+                    board[a] !== "" &&
+                    board[a] === board[b] &&
+                    board[a] === board[c]
+                ) {
+                    condition.winnerCells = [a, b, c];
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function checkDraw() {
+            return board.every(cell => cell !== "");
+        }
+
+        function highlightWinner() {
+            // Tìm điều kiện chiến thắng vừa xảy ra
+            for (let condition of winningConditions) {
+                const [a, b, c] = condition;
+                if (
+                    board[a] !== "" &&
+                    board[a] === board[b] &&
+                    board[a] === board[c]
+                ) {
+                    cells[a].classList.add("winner");
+                    cells[b].classList.add("winner");
+                    cells[c].classList.add("winner");
+                    break;
+                }
+            }
+        }
+
+        function updateScoreboard() {
+            scoreXElement.textContent = scores.X;
+            scoreOElement.textContent = scores.O;
+            scoreDrawElement.textContent = scores.Draw;
+        }
+
+        function resetGame() {
+            board = ["", "", "", "", "", "", "", "", ""];
+            gameActive = true;
+            currentPlayer = "X";
+            currentPlayerElement.textContent = "X";
+            statusElement.textContent = "Lượt của X";
+            moveHistory = []; // Xóa lịch sử khi chơi lại
+
+            cells.forEach(cell => {
+                cell.textContent = "";
+                cell.className = "cell";
+            });
+        }
+
+        function undoMove() {
+            if (moveHistory.length === 0) return;
+
+            // Khôi phục trạng thái trước đó
+            const previousState = moveHistory.pop();
+            board = [...previousState.board];
+            currentPlayer = previousState.currentPlayer;
+            gameActive = previousState.gameActive;
+
+            currentPlayerElement.textContent = currentPlayer;
+            if (gameActive) {
+                statusElement.textContent = `Lượt của ${currentPlayer}`;
+            }
+
+            // Cập nhật giao diện
+            cells.forEach((cell, index) => {
+                cell.textContent = board[index];
+                cell.className = "cell";
+                if (board[index] !== "") {
+                    cell.classList.add("taken", board[index].toLowerCase());
+                }
+            });
+        }
+
+        // Gán sự kiện click cho từng ô
+        cells.forEach(cell => {
+            cell.addEventListener("click", handleCellClick);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+I:\hoctap\C#\MyFirstMcpServer\MyFirstMcpServer\bin\Release\net8.0\publish\win-x64\MyFirstMcpServer.pdb
+I:\hoctap\C#\MyFirstMcpServer\MyFirstMcpServer\bin\Release\net8.0\publish\win-x64\appsettings.json
+I:\hoctap\C#\MyFirstMcpServer\MyFirstMcpServer\bin\Release\net8.0\publish\win-x64\Microsoft.Data.SqlClient.SNI.dll
+I:\hoctap\C#\MyFirstMcpServer\MyFirstMcpServer\bin\Release\net8.0\publish\win-x64\MyFirstMcpServer.exe
